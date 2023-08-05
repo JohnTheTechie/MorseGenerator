@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer name="dot">1</integer>
+    <integer name="dash">3</integer>
+    <integer name="intersymbol_delay">1</integer>
+    <integer name="interletter_delay">3</integer>
+    <integer name="interword_delay">7</integer>
+    <integer name="morse_multiplier">500</integer>
+</resources>

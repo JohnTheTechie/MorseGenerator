@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">MorseCoder</string>
+    <!-- main activity -->
+    <string name="input_hint">Enter the text to convert</string>
+    <string name="beeps_button_text">Beeper</string>
+    <string name="flash_button_text">Flash</string>
+
+    <string name="play_button_text">Play</string>
+    <string name="stop_button_text">Stop</string>
+
+    <!-- morse codes -->
+
+
+
+
+
+</resources>
