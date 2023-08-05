@@ -4,9 +4,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 
@@ -106,6 +108,10 @@ public class MainActivity extends AppCompatActivity {
 
     private void onPlayButtonPressed(boolean currState) {
         if (!currState) {
+            // first clear the keyboard from the view
+            InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(findViewById(R.id.master_frame).getWindowToken(), 0);
+            // start the executor and then switch the activity states
             executor.start(inputView.getText().toString());
             model.getPlayState().setValue(true);
         }
