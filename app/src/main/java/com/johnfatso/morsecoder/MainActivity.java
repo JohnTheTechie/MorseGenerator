@@ -138,6 +138,7 @@ public class MainActivity extends AppCompatActivity {
      */
     IMorseExecutor.Callback flasherCallback = (boolean newState) -> {
         if (currFlasherState) {
+            Log.v(TAG, "flasher state : "+newState);
             model.getFlasherState().postValue(newState ? FlasherState.ON : FlasherState.OFF);
         }
         else {

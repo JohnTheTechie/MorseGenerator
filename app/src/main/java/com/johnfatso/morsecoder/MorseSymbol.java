@@ -11,6 +11,6 @@ public enum MorseSymbol {
     public final long delay;
 
     MorseSymbol(long delay){
-        this.delay = delay*500;
+        this.delay = delay*300;
     }
 }

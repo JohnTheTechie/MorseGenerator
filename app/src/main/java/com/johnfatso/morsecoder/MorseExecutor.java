@@ -1,7 +1,6 @@
 package com.johnfatso.morsecoder;
 
-import android.content.res.Resources;
-import android.os.SystemClock;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.concurrent.Semaphore;
@@ -12,15 +11,18 @@ import java.util.concurrent.Semaphore;
  */
 public class MorseExecutor implements IMorseExecutor{
 
+    private final String TAG = "MorseExecutor";
 
     private final ArrayList<Callback> callbacks;
     private Callback cleanupCallback;
     private boolean executionFlag;
+    private final MorseBeeper beeper;
     private Semaphore semaphore;
 
     MorseExecutor() {
         callbacks = new ArrayList<>();
         executionFlag = false;
+        beeper = new MorseBeeper();
     }
 
     @Override
@@ -46,61 +48,63 @@ public class MorseExecutor implements IMorseExecutor{
         executionFlag = true;
         semaphore = new Semaphore(callbacks.size());
         for (Callback callback: callbacks)
-            new Thread() {
-                @Override
-                public void run() {
-                    try {
-                        semaphore.acquire();
-                        ArrayList<MorseSymbol> sequence = new MorseSeriesConverter()
-                                .setInputString(string)
-                                .getMorseSequence();
-                        if (sequence.isEmpty()) {
+            new Thread(() -> {
+                try {
+                    semaphore.acquire();
+                    ArrayList<MorseSymbol> sequence = new MorseSeriesConverter()
+                            .setInputString(string)
+                            .getMorseSequence();
+                    if (sequence.isEmpty()) {
+                        semaphore.release();
+                        beeper.stopTone();
+                        return;
+                    }
+                    for (MorseSymbol symbol: sequence) {
+                        if (!executionFlag) {
+                            beeper.stopTone();
                             semaphore.release();
                             return;
                         }
-                        for (MorseSymbol symbol: sequence) {
-                            if (!executionFlag) {
-                                semaphore.release();
-                                return;
-                            }
-                            switch (symbol) {
-                                case DOT:
-                                case DASH:
-                                    callback.execute(true);
-                                    sleep(symbol.delay);
-                                    break;
-                                case INTERLETTER_SPACE:
-                                case INTERWORD_SPACE:
-                                case INTERSYMBOL_SPACE:
-                                default:
-                                    callback.execute(false);
-                                    sleep(symbol.delay);
-                                    break;
-                            }
+                        Log.v(TAG, "executing symbol: "+symbol);
+                        switch (symbol) {
+                            case DOT:
+                            case DASH:
+                                beeper.startTone(500, 0.5);
+                                callback.execute(true);
+                                Thread.sleep(symbol.delay);
+                                break;
+                            case INTERLETTER_SPACE:
+                            case INTERWORD_SPACE:
+                            case INTERSYMBOL_SPACE:
+                            default:
+                                beeper.stopTone();
+                                callback.execute(false);
+                                Thread.sleep(symbol.delay);
+                                break;
                         }
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                    } finally {
-                        semaphore.release();
                     }
-
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                } finally {
+                    beeper.stopTone();
+                    callback.execute(false);
+                    semaphore.release();
                 }
-            }.start();
+
+            }).start();
 
         if (cleanupCallback != null) {
-            new Thread() {
-                @Override
-                public void run() {
-                    try {
-                        semaphore.acquire();
-                        cleanupCallback.execute(true);
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                    } finally {
-                        semaphore.release();
-                    }
+            new Thread(() -> {
+                try {
+                    semaphore.acquire();
+                    Thread.sleep(200);
+                    cleanupCallback.execute(true);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                } finally {
+                    semaphore.release();
                 }
-            }.start();
+            }).start();
         }
     }
 
